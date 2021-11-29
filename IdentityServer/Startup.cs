@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using IdentityServer4.EntityFramework.DbContexts;
 using IdentityServer4.EntityFramework.Mappers;
+using IdentityServer.Data;
 
 namespace IdentityServer
 {
@@ -31,9 +32,9 @@ namespace IdentityServer
         {
             services.AddControllersWithViews();
 
+            // Mssql Server implementation of Identity Server resources, scopes and other fields.
             var migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
             string connectionString = Configuration["ConnectionStrings:IdentityServerDBConext"];
-            //const string connectionString = @"Data Source=(LocalDb)\MSSQLLocalDB;database=IdentityServer4.Quickstart.EntityFramework-4.0.0;trusted_connection=yes;";
 
             services.AddIdentityServer()
                 .AddTestUsers(TestUsers.Users)
@@ -47,6 +48,13 @@ namespace IdentityServer
                     options.ConfigureDbContext = b => b.UseSqlServer(connectionString,
                         sql => sql.MigrationsAssembly(migrationsAssembly));
                 }).AddDeveloperSigningCredential();
+
+
+            #region In Memory Identity Server Configuration
+
+            /* below code is provide in memory identity server configuration.
+             * If you choose in memory configuration instead of ef core real db implementation please comment the above code block then uncomment below code. Also remove the "app.MigrateDatabaseAndSeedData();" code blog which is located inside of Configure method
+             */
             //services.AddIdentityServer()
             //    .AddInMemoryClients(Config.Clients)
             //    .AddInMemoryApiScopes(Config.ApiScopes)
@@ -54,14 +62,15 @@ namespace IdentityServer
             //    .AddTestUsers(TestUsers.Users)
             //    .AddDeveloperSigningCredential();
 
+            #endregion
 
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            // it only require to call first time initialize of application 
-            InitializeDatabase(app);
+            // Database migration and data seeding for initial data for the 
+            app.MigrateDatabaseAndSeedData();
 
             if (env.IsDevelopment())
             {
